@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Admin\Siswas\Schemas;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use App\Models\Kelas;
 
 class SiswaForm
 {
@@ -23,10 +24,15 @@ class SiswaForm
                     ->unique(ignoreRecord: true)
                     ->maxLength(50),
 
-                TextInput::make('kelas')
+                Select::make('kelas')
                     ->label('Kelas')
-                    ->required()
-                    ->maxLength(50),
+                    ->options(
+                        Kelas::query()
+                            ->orderBy('nama_kelas')
+                            ->pluck('nama_kelas', 'nama_kelas')
+                    )
+                    ->searchable()
+                    ->required(),
 
                 Select::make('jenis_kelamin')
                     ->label('Jenis Kelamin')

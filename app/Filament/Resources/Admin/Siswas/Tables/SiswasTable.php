@@ -26,8 +26,13 @@ class SiswasTable
                     ->searchable(),
                 TextColumn::make('kelas')
                     ->label('Kelas')
+                    ->formatStateUsing(fn ($state) => 'Kelas ' . $state)
                     ->sortable()
-                    ->searchable(),
+                    ->searchable(query: function ($query, string $search) {
+                        $search = preg_replace('/^kelas\s*/i', '', trim($search));
+
+                        $query->where('kelas', 'like', "%{$search}%");
+                    }),
                 TextColumn::make('jenis_kelamin')
                     ->label('Jenis Kelamin')
                     ->sortable()

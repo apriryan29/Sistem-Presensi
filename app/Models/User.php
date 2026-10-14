@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Filament\Panel;
-use Filament\Models\Contracts\FilamentUser;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Kelas;
 
 #[Fillable(['name', 'email', 'password', 'role', 'jabatan'])]
 #[Hidden(['password', 'remember_token'])]
@@ -39,5 +40,10 @@ class User extends Authenticatable
             'guru' => $this->role === 'guru',
             default => false,
         };
+    }
+
+    public function kelasDiampu(): HasMany
+    {
+        return $this->hasMany(Kelas::class, 'wali_kelas_id');
     }
 }
