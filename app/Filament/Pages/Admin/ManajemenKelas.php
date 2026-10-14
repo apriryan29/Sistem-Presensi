@@ -10,11 +10,13 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use App\Models\User;
+use App\Filament\Pages\Admin\DetailKelas;
 
 class ManajemenKelas extends Page implements HasTable
 {
@@ -32,7 +34,13 @@ class ManajemenKelas extends Page implements HasTable
     protected static ?string $navigationLabel = 'Kelas';
 
     protected static ?string $title = 'Daftar Kelas';
-
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin/manajemen-kelas') => 'Kelas',
+            '#' => 'Daftar',
+        ];
+    }
     protected function getHeaderActions(): array
     {
         return [
@@ -87,8 +95,19 @@ class ManajemenKelas extends Page implements HasTable
                     ->sortable(),
             ])
             ->recordActions([
+                Action::make('lihat')
+                    ->label('')
+                    ->icon(Heroicon::OutlinedEye)
+                    ->color('success')
+                    ->tooltip('Lihat Detail Kelas')
+                    ->url(
+                        fn (Kelas $record): string => DetailKelas::getUrl([
+                            'record' => $record->getKey(),
+                        ])
+                    ),
                 EditAction::make()
                     ->label('')
+                    ->tooltip('Edit Kelas')
                     ->modalHeading('Edit Kelas')
                     ->modalSubmitActionLabel('Simpan')
                     ->schema([
