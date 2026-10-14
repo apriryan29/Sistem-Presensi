@@ -2,28 +2,33 @@
 
 namespace App\Filament\Pages\Auth;
 
+use App\Filament\Pages\Admin\Dashboard as AdminDashboard;
+use App\Filament\Pages\Guru\Dashboard as GuruDashboard;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
-use Filament\Notifications\Notification;
-use Illuminate\Validation\ValidationException;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class Login extends BaseLogin
 {
     protected string $view = 'filament.pages.auth.login';
+
     public ?string $loginError = null;
 
     public int $loginErrorCount = 0;
-     public function form(Schema $schema): Schema
+
+    public function form(Schema $schema): Schema
     {
         return $schema->components([
             $this->getEmailFormComponent()
-                ->Label('Alamat Email'),
+                ->label('Alamat Email'),
 
             $this->getPasswordFormComponent(),
-            
+
             Select::make('role')
                 ->label('Masuk sebagai')
                 ->options([
@@ -45,30 +50,54 @@ class Login extends BaseLogin
         ];
     }
 
-
     public function authenticate(): ?LoginResponse
-    {
-        $this->loginError = null;
+{
+    $this->loginError = null;
 
-        try {
-            return parent::authenticate();
-        } catch (ValidationException $e) {
-            $errors = $e->errors();
+    try {
+        $role = $this->data['role'] ?? null;
 
-            $this->showError(
-                array_key_exists('data.email', $errors)
-                    ? 'Email, password, atau level pengguna salah.'
-                    : 'Lengkapi semua isian terlebih dahulu.'
-            );
+        $url = match ($role) {
+            'admin' => AdminDashboard::getUrl(panel: 'admin'),
+            'guru' => GuruDashboard::getUrl(panel: 'admin'),
+            default => null,
+        };
 
-            return null;
+        if ($url !== null) {
+            redirect()->setIntendedUrl($url);
         }
+
+        return parent::authenticate();
+    } catch (ValidationException $e) {
+        $errors = $e->errors();
+
+        $this->showError(
+            array_key_exists('data.email', $errors)
+                ? 'Email, password, atau level pengguna salah.'
+                : 'Lengkapi semua isian terlebih dahulu.'
+        );
+
+        return null;
+    }
+}
+
+    protected function getRedirectUrl(): string
+    {
+        $user = Auth::user();
+
+        if ($user?->role === 'guru') {
+            return GuruDashboard::getUrl(panel: 'admin');
+        }
+
+        return AdminDashboard::getUrl(panel: 'admin');
     }
 
-    // Batas percobaan login: tampilkan di banner, bukan toast.
-    protected function getRateLimitedNotification(TooManyRequestsException $exception): ?Notification
-    {
-        $this->showError("Terlalu banyak percobaan login. Coba lagi dalam {$exception->secondsUntilAvailable} detik.");
+    protected function getRateLimitedNotification(
+        TooManyRequestsException $exception
+    ): ?Notification {
+        $this->showError(
+            "Terlalu banyak percobaan login. Coba lagi dalam {$exception->secondsUntilAvailable} detik."
+        );
 
         return null;
     }
