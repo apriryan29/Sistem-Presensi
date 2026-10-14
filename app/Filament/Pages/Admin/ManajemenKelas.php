@@ -3,20 +3,21 @@
 namespace App\Filament\Pages\Admin;
 
 use App\Models\Kelas;
+use App\Models\User;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Actions\Action;
-use Filament\Actions\EditAction;
-use Filament\Actions\CreateAction;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use App\Models\User;
-use App\Filament\Pages\Admin\DetailKelas;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class ManajemenKelas extends Page implements HasTable
 {
@@ -34,6 +35,27 @@ class ManajemenKelas extends Page implements HasTable
     protected static ?string $navigationLabel = 'Kelas';
 
     protected static ?string $title = 'Daftar Kelas';
+    public static function canAccess(): bool
+    {
+        return Auth::user()?->role === 'admin';
+    }
+    public static function canCreate(): bool
+    {
+        return Auth::user()?->role === 'admin';
+    }
+    public static function canEdit(Model $record): bool
+    {
+        return Auth::user()?->role === 'admin';
+    }
+    public static function canDelete(Model $record): bool
+    {
+        return Auth::user()?->role === 'admin';
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Auth::user()?->role === 'admin';
+    }
     public function getBreadcrumbs(): array
     {
         return [
@@ -56,7 +78,10 @@ class ManajemenKelas extends Page implements HasTable
                         ->label('Nama Kelas')
                         ->placeholder('Contoh: 1')
                         ->required()
-                        ->unique(table: Kelas::class, column: 'nama_kelas'),
+                        ->unique(
+                            table: Kelas::class,
+                            column: 'nama_kelas',
+                        ),
 
                     Select::make('wali_kelas_id')
                         ->label('Wali Kelas')
@@ -71,16 +96,18 @@ class ManajemenKelas extends Page implements HasTable
                 ]),
         ];
     }
-
-    
     public function table(Table $table): Table
     {
         return $table
-            ->query(Kelas::query()->withCount('siswas'))
+            ->query(
+                Kelas::query()->withCount('siswas')
+            )
             ->columns([
                 TextColumn::make('nama_kelas')
                     ->label('Nama Kelas')
-                    ->formatStateUsing(fn ($state) => 'Kelas ' . $state)
+                    ->formatStateUsing(
+                        fn ($state): string => 'Kelas ' . $state
+                    )
                     ->searchable()
                     ->sortable(),
 

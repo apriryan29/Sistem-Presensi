@@ -17,6 +17,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DetailKelas extends Page implements HasTable
 {
@@ -28,7 +29,10 @@ class DetailKelas extends Page implements HasTable
         Heroicon::OutlinedBuildingOffice2;
 
     protected static bool $shouldRegisterNavigation = false;
-
+    public static function canAccess(): bool
+    {
+        return Auth::user()?->role === 'admin';
+    }
     protected static ?string $slug = 'detail-kelas/{record}';
 
     protected function getHeaderActions(): array
