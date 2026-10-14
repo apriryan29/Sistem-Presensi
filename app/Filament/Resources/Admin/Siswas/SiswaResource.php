@@ -21,7 +21,7 @@ class SiswaResource extends Resource
     protected static ?string $model = Siswa::class;
 
     protected static string|BackedEnum|null $navigationIcon =
-        Heroicon::OutlinedRectangleStack;
+        Heroicon::OutlinedAcademicCap;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Menu';
 

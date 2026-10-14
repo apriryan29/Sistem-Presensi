@@ -21,14 +21,14 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon =
-        Heroicon::OutlinedRectangleStack;
+        Heroicon::OutlinedUserGroup;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Pengguna';
 
     protected static ?int $navigationSort = 2;
-
+    protected static ?string $pluralModelLabel = 'Pengguna';
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema

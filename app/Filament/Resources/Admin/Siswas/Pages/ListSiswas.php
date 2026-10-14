@@ -13,7 +13,9 @@ class ListSiswas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+            ->label('Tambah Siswa')
+            ->url($this->getResource()::getUrl('create')),
         ];
     }
 }
