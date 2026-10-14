@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Admin\Siswas\Tables;
 use Dom\Text;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -36,7 +37,13 @@ class SiswasTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->label(''),
+                DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->label('')
+                    ->modalHeading('Hapus Siswa')
+                    ->modalSubheading('Apakah Anda yakin ingin menghapus siswa ini? Tindakan ini tidak dapat dibatalkan.'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
