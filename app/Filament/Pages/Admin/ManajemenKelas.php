@@ -7,6 +7,7 @@ use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -28,7 +29,7 @@ class ManajemenKelas extends Page implements HasTable
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedBuildingOffice2;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Siswa';
+    protected static string|\UnitEnum|null $navigationGroup = 'Menu';
 
     protected static ?int $navigationSort = 2;
 
@@ -158,6 +159,15 @@ class ManajemenKelas extends Page implements HasTable
                             ->preload()
                             ->nullable(),
                     ]),
+                DeleteAction::make()
+                    ->label('')
+                    ->tooltip('Hapus Kelas')
+                    ->modalHeading('Hapus Kelas')
+                    ->modalSubheading(
+                        'Apakah Anda yakin ingin menghapus kelas ini?'
+                    )
+                    ->modalSubmitActionLabel('Hapus')
+                    ->modalCancelActionLabel('Batal'),
             ])
             ->defaultSort('nama_kelas')
             ->paginated(false);

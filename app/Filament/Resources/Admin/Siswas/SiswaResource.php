@@ -23,7 +23,7 @@ class SiswaResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedAcademicCap;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Siswa';
+    protected static string|\UnitEnum|null $navigationGroup = 'Menu';
 
     protected static ?int $navigationSort = 1;
 
