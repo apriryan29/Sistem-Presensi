@@ -28,7 +28,9 @@ class UserResource extends Resource
     protected static ?string $navigationLabel = 'Pengguna';
 
     protected static ?int $navigationSort = 1;
+
     protected static ?string $pluralModelLabel = 'Pengguna';
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
@@ -43,9 +45,7 @@ class UserResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -56,7 +56,8 @@ class UserResource extends Resource
             'edit' => EditUser::route('/{record}/edit'),
         ];
     }
-     public static function canViewAny(): bool
+
+    public static function canViewAny(): bool
     {
         return Auth::user()?->role === 'admin';
     }
@@ -73,7 +74,18 @@ class UserResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        return Auth::user()?->role === 'admin';
+        if (Auth::user()?->role !== 'admin') {
+            return false;
+        }
+
+        if (
+            $record->role === 'admin' &&
+            User::where('role', 'admin')->count() <= 1
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     public static function canDeleteAny(): bool
