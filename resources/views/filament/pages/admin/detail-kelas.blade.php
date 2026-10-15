@@ -1,28 +1,59 @@
+
 <x-filament-panels::page>
-    <div class="grid gap-4 md:grid-cols-2">
-        <x-filament::section>
-            <x-slot name="heading">
-                Informasi Kelas
-            </x-slot>
+    <x-filament::section>
+        <x-slot name="heading">
+            Informasi Kelas
+        </x-slot>
 
-            <div class="space-y-2">
-                <p>
-                    <strong>Nama Kelas:</strong>
-                    Kelas {{ $this->kelas->nama_kelas }}
-                </p>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
 
-                <p>
-                    <strong>Wali Kelas:</strong>
-                    {{ $this->kelas->waliKelas?->name ?? 'Belum ditentukan' }}
-                </p>
+            {{-- Nama Kelas --}}
+            <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; gap: 16px;">
+                <label class="fi-fo-field-wrp-label" style="font-size: 14px;">
+                    Nama Kelas
+                </label>
 
-                <p>
-                    <strong>Jumlah Siswa:</strong>
-                    {{ \App\Models\Siswa::where('kelas', (int) $this->kelas->nama_kelas)->count() }}
-                </p>
+                <input
+                    type="text"
+                    value="Kelas {{ $this->kelas->nama_kelas }}"
+                    readonly
+                    class="fi-input"
+                    style="width: 100%; font-size: 14px; font-weight: bold;"
+                >
             </div>
-        </x-filament::section>
-    </div>
+
+            {{-- Jumlah Siswa --}}
+            <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; gap: 16px;">
+                <label class="fi-fo-field-wrp-label" style="font-size: 14px;">
+                    Jumlah Siswa
+                </label>
+
+                <input
+                    type="text"
+                    value="{{ \App\Models\Siswa::where('kelas', (int) $this->kelas->nama_kelas)->count() }} Siswa"
+                    readonly
+                    class="fi-input"
+                    style="width: 100%; font-size: 14px; font-weight: bold;"
+                >
+            </div>
+
+            {{-- Wali Kelas --}}
+            <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; gap: 16px;">
+                <label class="fi-fo-field-wrp-label" style="font-size: 14px;">
+                    Wali Kelas
+                </label>
+
+                <input
+                    type="text"
+                    value="{{ $this->kelas->waliKelas?->name ?? 'Belum ditentukan' }}"
+                    readonly
+                    class="fi-input"
+                    style="width: 100%; font-size: 14px; font-weight: bold;"
+                >
+            </div>
+
+        </div>
+    </x-filament::section>
 
     {{ $this->table }}
 </x-filament-panels::page>
