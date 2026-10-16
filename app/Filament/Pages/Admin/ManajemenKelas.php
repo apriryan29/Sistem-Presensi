@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Admin;
 
 use App\Models\Kelas;
+use App\Models\Siswa;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -11,6 +12,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -36,18 +38,22 @@ class ManajemenKelas extends Page implements HasTable
     protected static ?string $navigationLabel = 'Kelas';
 
     protected static ?string $title = 'Daftar Kelas';
+
     public static function canAccess(): bool
     {
         return Auth::user()?->role === 'admin';
     }
+
     public static function canCreate(): bool
     {
         return Auth::user()?->role === 'admin';
     }
+
     public static function canEdit(Model $record): bool
     {
         return Auth::user()?->role === 'admin';
     }
+
     public static function canDelete(Model $record): bool
     {
         return Auth::user()?->role === 'admin';
@@ -57,6 +63,7 @@ class ManajemenKelas extends Page implements HasTable
     {
         return Auth::user()?->role === 'admin';
     }
+
     public function getBreadcrumbs(): array
     {
         return [
@@ -64,6 +71,7 @@ class ManajemenKelas extends Page implements HasTable
             '#' => 'Daftar',
         ];
     }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -77,8 +85,12 @@ class ManajemenKelas extends Page implements HasTable
                 ->schema([
                     TextInput::make('nama_kelas')
                         ->label('Nama Kelas')
-                        ->placeholder('Contoh: 1')
+                        ->placeholder('Contoh: 1, atau Lulusan 2026')
                         ->required()
+                        ->maxLength(30)
+                        ->dehydrateStateUsing(
+                            fn (?string $state): string => trim((string) $state)
+                        )
                         ->unique(
                             table: Kelas::class,
                             column: 'nama_kelas',
@@ -97,23 +109,43 @@ class ManajemenKelas extends Page implements HasTable
                 ]),
         ];
     }
+
     public function table(Table $table): Table
     {
+        $kelasTable = (new Kelas())->getTable();
+        $siswaTable = (new Siswa())->getTable();
+
         return $table
             ->query(
-                Kelas::query()->withCount('siswas')
+                Kelas::query()
+                    ->select($kelasTable . '.*')
+                    ->selectSub(
+                        Siswa::query()
+                            ->selectRaw('count(*)')
+                            ->whereColumn(
+                                $siswaTable . '.kelas',
+                                $kelasTable . '.nama_kelas'
+                            ),
+                        'siswas_count'
+                    )
+                    ->orderByRaw($kelasTable . ".nama_kelas NOT REGEXP '^[0-9]+$'")
+                    ->orderByRaw('CAST(' . $kelasTable . '.nama_kelas AS UNSIGNED)')
+                    ->orderBy($kelasTable . '.nama_kelas')
             )
             ->columns([
                 TextColumn::make('nama_kelas')
                     ->label('Nama Kelas')
                     ->formatStateUsing(
-                        fn ($state): string => 'Kelas ' . $state
+                        fn ($state): string => ctype_digit(trim((string) $state))
+                            ? 'Kelas ' . $state
+                            : (string) $state
                     )
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('waliKelas.name')
                     ->label('Wali Kelas')
+                    ->placeholder('-')
                     ->searchable()
                     ->sortable(),
 
@@ -133,6 +165,7 @@ class ManajemenKelas extends Page implements HasTable
                             'record' => $record->getKey(),
                         ])
                     ),
+
                 EditAction::make()
                     ->label('')
                     ->tooltip('Edit Kelas')
@@ -142,6 +175,10 @@ class ManajemenKelas extends Page implements HasTable
                         TextInput::make('nama_kelas')
                             ->label('Nama Kelas')
                             ->required()
+                            ->maxLength(30)
+                            ->dehydrateStateUsing(
+                                fn (?string $state): string => trim((string) $state)
+                            )
                             ->unique(
                                 table: Kelas::class,
                                 column: 'nama_kelas',
@@ -159,17 +196,31 @@ class ManajemenKelas extends Page implements HasTable
                             ->preload()
                             ->nullable(),
                     ]),
+
                 DeleteAction::make()
                     ->label('')
                     ->tooltip('Hapus Kelas')
                     ->modalHeading('Hapus Kelas')
-                    ->modalSubheading(
+                    ->modalDescription(
                         'Apakah Anda yakin ingin menghapus kelas ini?'
                     )
                     ->modalSubmitActionLabel('Hapus')
-                    ->modalCancelActionLabel('Batal'),
+                    ->modalCancelActionLabel('Batal')
+                    ->before(function (Kelas $record, DeleteAction $action): void {
+                        if (Siswa::query()
+                            ->where('kelas', (string) $record->nama_kelas)
+                            ->exists()
+                        ) {
+                            Notification::make()
+                                ->title('Kelas tidak bisa dihapus')
+                                ->body('Masih ada siswa di kelas ini.')
+                                ->danger()
+                                ->send();
+
+                            $action->cancel();
+                        }
+                    }),
             ])
-            ->defaultSort('nama_kelas')
             ->paginated(false);
     }
 }

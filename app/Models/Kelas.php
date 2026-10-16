@@ -13,6 +13,32 @@ class Kelas extends Model
         'wali_kelas_id',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Kelas $kelas): void {
+            $kelas->nama_kelas = trim((string) $kelas->nama_kelas);
+        });
+
+        static::deleting(function (Kelas $kelas): void {
+            if ($kelas->siswas()->exists()) {
+                throw new \Exception('Kelas masih memiliki siswa.');
+            }
+        });
+
+        static::updating(function (Kelas $kelas): void {
+            if (! $kelas->isDirty('nama_kelas')) {
+                return;
+            }
+
+            $lama = (string) $kelas->getOriginal('nama_kelas');
+            $kelas->nama_kelas = trim((string) $kelas->nama_kelas);
+
+            Siswa::query()
+                ->where('kelas', $lama)
+                ->update(['kelas' => $kelas->nama_kelas]);
+        });
+    }
+
     public function waliKelas(): BelongsTo
     {
         return $this->belongsTo(User::class, 'wali_kelas_id');
@@ -22,7 +48,8 @@ class Kelas extends Model
     {
         return $this->hasMany(
             Siswa::class,
-            'kelas'
+            'kelas',
+            'nama_kelas'
         );
     }
 }

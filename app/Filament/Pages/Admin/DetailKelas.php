@@ -8,6 +8,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -16,8 +17,8 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DetailKelas extends Page implements HasTable
 {
@@ -29,11 +30,15 @@ class DetailKelas extends Page implements HasTable
         Heroicon::OutlinedBuildingOffice2;
 
     protected static bool $shouldRegisterNavigation = false;
+
+    protected static ?string $slug = 'detail-kelas/{record}';
+
+    public Kelas $kelas;
+
     public static function canAccess(): bool
     {
         return Auth::user()?->role === 'admin';
     }
-    protected static ?string $slug = 'detail-kelas/{record}';
 
     protected function getHeaderActions(): array
     {
@@ -44,8 +49,6 @@ class DetailKelas extends Page implements HasTable
                 ->url(ManajemenKelas::getUrl()),
         ];
     }
-
-    public Kelas $kelas;
 
     public function getBreadcrumbs(): array
     {
@@ -63,12 +66,19 @@ class DetailKelas extends Page implements HasTable
 
     public function getTitle(): string
     {
-        return 'Detail Kelas ' . $this->kelas->nama_kelas;
+        return 'Detail ' . self::labelKelas((string) $this->kelas->nama_kelas);
     }
 
-    protected function nomorKelas(): int
+    protected static function labelKelas(?string $nama): string
     {
-        return (int) $this->kelas->nama_kelas;
+        $nama = trim((string) $nama);
+
+        return ctype_digit($nama) ? 'Kelas ' . $nama : $nama;
+    }
+
+    protected function namaKelasSaatIni(): string
+    {
+        return (string) $this->kelas->nama_kelas;
     }
 
     public function table(Table $table): Table
@@ -76,7 +86,7 @@ class DetailKelas extends Page implements HasTable
         return $table
             ->query(
                 Siswa::query()
-                    ->where('kelas', $this->nomorKelas())
+                    ->where('kelas', $this->namaKelasSaatIni())
             )
             ->columns([
                 TextColumn::make('nama')
@@ -96,55 +106,68 @@ class DetailKelas extends Page implements HasTable
                 TextColumn::make('kelas')
                     ->label('Kelas')
                     ->formatStateUsing(
-                        fn ($state): string => 'Kelas ' . $state
+                        fn ($state): string => self::labelKelas((string) $state)
                     ),
             ])
             ->defaultSort('nama')
             ->paginated([10, 25, 50])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    BulkAction::make('naikKelas')
-                        ->label('Naik Kelas')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->modalHeading('Naik Kelas')
-                        ->modalDescription(
-                            'Siswa yang dipilih akan dipindahkan ke kelas berikutnya.'
-                        )
-                        ->modalSubmitActionLabel('Ya, Naik Kelas')
+                    BulkAction::make('pindahKelas')
+                        ->label('Naik / Pindah Kelas')
+                        ->modalHeading('Naik / Pindah Kelas')
+                        ->modalSubmitActionLabel('Ya, Pindahkan')
                         ->modalCancelActionLabel('Batal')
-                        ->action(function (Collection $records): void {
-                            $nomorKelas = $this->nomorKelas();
+                        ->deselectRecordsAfterCompletion()
+                        ->schema([
+                            Select::make('kelas_tujuan')
+                                ->label('Kelas Tujuan')
+                                ->required()
+                                ->searchable()
+                                ->options(function (): array {
+                                    return Kelas::query()
+                                        ->where('nama_kelas', '!=', $this->namaKelasSaatIni())
+                                        ->pluck('nama_kelas')
+                                        ->sort(SORT_NATURAL)
+                                        ->mapWithKeys(fn (string $nama): array => [
+                                            $nama => self::labelKelas($nama),
+                                        ])
+                                        ->all();
+                                })
+                                ->default(function (): ?string {
+                                    $nama = trim($this->namaKelasSaatIni());
 
-                            if ($nomorKelas < 1 || $nomorKelas >= 6) {
+                                    if (! ctype_digit($nama)) {
+                                        return null;
+                                    }
+
+                                    $berikutnya = (string) ((int) $nama + 1);
+
+                                    return Kelas::query()
+                                        ->where('nama_kelas', $berikutnya)
+                                        ->exists()
+                                            ? $berikutnya
+                                            : null;
+                                }),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $sekarang = $this->namaKelasSaatIni();
+                            $tujuan = (string) ($data['kelas_tujuan'] ?? '');
+
+                            if ($tujuan === '' || $tujuan === $sekarang) {
                                 Notification::make()
-                                    ->title('Tidak bisa naik kelas')
-                                    ->body(
-                                        'Kelas 6 merupakan kelas terakhir.'
-                                    )
+                                    ->title('Kelas tujuan tidak valid')
+                                    ->body('Pilih kelas tujuan yang berbeda dari kelas saat ini.')
                                     ->warning()
                                     ->send();
 
                                 return;
                             }
 
-                            $nomorBerikutnya = $nomorKelas + 1;
-
-                            $kelasBerikutnya = Kelas::query()
-                                ->where(
-                                    'nama_kelas',
-                                    (string) $nomorBerikutnya
-                                )
-                                ->exists();
-
-                            if (! $kelasBerikutnya) {
+                            if (! Kelas::query()->where('nama_kelas', $tujuan)->exists()) {
                                 Notification::make()
-                                    ->title('Kelas berikutnya tidak tersedia')
-                                    ->body(
-                                        'Buat kelas ' .
-                                        $nomorBerikutnya .
-                                        ' terlebih dahulu.'
-                                    )
+                                    ->title('Kelas tujuan tidak tersedia')
+                                    ->body('Buat kelas ' . $tujuan . ' terlebih dahulu.')
                                     ->danger()
                                     ->send();
 
@@ -152,29 +175,16 @@ class DetailKelas extends Page implements HasTable
                             }
 
                             $jumlahSiswa = DB::transaction(
-                                function () use (
-                                    $records,
-                                    $nomorKelas,
-                                    $nomorBerikutnya
-                                ): int {
-                                    return Siswa::query()
-                                        ->whereIn(
-                                            'id',
-                                            $records->modelKeys()
-                                        )
-                                        ->where('kelas', $nomorKelas)
-                                        ->update([
-                                            'kelas' => $nomorBerikutnya,
-                                        ]);
-                                }
+                                fn (): int => Siswa::query()
+                                    ->whereIn('id', $records->modelKeys())
+                                    ->where('kelas', $sekarang)
+                                    ->update(['kelas' => $tujuan])
                             );
 
                             if ($jumlahSiswa === 0) {
                                 Notification::make()
                                     ->title('Tidak ada siswa yang dipindahkan')
-                                    ->body(
-                                        'Periksa kembali siswa yang dipilih.'
-                                    )
+                                    ->body('Periksa kembali siswa yang dipilih.')
                                     ->warning()
                                     ->send();
 
@@ -182,12 +192,10 @@ class DetailKelas extends Page implements HasTable
                             }
 
                             Notification::make()
-                                ->title('Berhasil naik kelas')
+                                ->title('Berhasil dipindahkan')
                                 ->body(
-                                    $jumlahSiswa .
-                                    ' siswa dipindahkan ke Kelas ' .
-                                    $nomorBerikutnya .
-                                    '.'
+                                    $jumlahSiswa . ' siswa dipindahkan ke '
+                                    . self::labelKelas($tujuan) . '.'
                                 )
                                 ->success()
                                 ->send();

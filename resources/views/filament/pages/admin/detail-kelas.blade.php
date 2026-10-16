@@ -1,5 +1,9 @@
-
 <x-filament-panels::page>
+    @php
+        $namaKelas = trim((string) $this->kelas->nama_kelas);
+        $labelKelas = ctype_digit($namaKelas) ? 'Kelas ' . $namaKelas : $namaKelas;
+    @endphp
+
     <x-filament::section>
         <x-slot name="heading">
             Informasi Kelas
@@ -15,7 +19,7 @@
 
                 <input
                     type="text"
-                    value="Kelas {{ $this->kelas->nama_kelas }}"
+                    value="{{ $labelKelas }}"
                     readonly
                     class="fi-input"
                     style="width: 100%; font-size: 14px; font-weight: bold;"
@@ -30,7 +34,7 @@
 
                 <input
                     type="text"
-                    value="{{ \App\Models\Siswa::where('kelas', (int) $this->kelas->nama_kelas)->count() }} Siswa"
+                    value="{{ $this->kelas->siswas()->count() }} Siswa"
                     readonly
                     class="fi-input"
                     style="width: 100%; font-size: 14px; font-weight: bold;"
@@ -54,6 +58,28 @@
 
         </div>
     </x-filament::section>
+
+    {{-- Card petunjuk (warna berbeda) --}}
+    <div
+        style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            background-color: rgba(59, 130, 246, 0.10);
+        "
+    >
+        <x-filament::icon
+            icon="heroicon-o-information-circle"
+            style="width: 24px; height: 24px; flex-shrink: 0; color: rgb(59, 130, 246);"
+        />
+
+        <span style="font-size: 14px; font-weight: 600; color: rgb(59, 130, 246);">
+            Pilih Siswa untuk Pindah Kelas, Lulus, atau Naik Kelas.
+        </span>
+    </div>
 
     {{ $this->table }}
 </x-filament-panels::page>
