@@ -13,7 +13,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Kelas;
 
-#[Fillable(['name', 'email', 'password', 'role', 'jabatan'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'jabatan'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {

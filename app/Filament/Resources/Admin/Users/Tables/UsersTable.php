@@ -10,6 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class UsersTable
 {
@@ -18,6 +19,11 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label('Nama Lengkap')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('username')
                     ->label('Nama Pengguna')
                     ->sortable()
                     ->searchable(),
@@ -43,9 +49,7 @@ class UsersTable
                     ->sortable(false)
                     ->searchable(false),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->recordActions([
                 EditAction::make()
                     ->label(''),
@@ -55,11 +59,25 @@ class UsersTable
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Pengguna')
                     ->modalDescription(
-                        'Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.'
+                        'Apakah Anda yakin ingin menghapus pengguna ini?'
                     )
                     ->before(function (DeleteAction $action): void {
                         $record = $action->getRecord();
 
+                        // Cegah penghapusan akun sendiri.
+                        if ($record->is(Auth::user())) {
+                            Notification::make()
+                                ->title('Penghapusan dibatalkan')
+                                ->body(
+                                    'Anda tidak dapat menghapus akun yang sedang digunakan.'
+                                )
+                                ->danger()
+                                ->send();
+
+                            $action->halt();
+                        }
+
+                        // Cegah penghapusan Admin terakhir.
                         if (
                             $record->role === 'admin' &&
                             User::where('role', 'admin')->count() <= 1
@@ -67,7 +85,7 @@ class UsersTable
                             Notification::make()
                                 ->title('Penghapusan dibatalkan')
                                 ->body(
-                                    'Admin terakhir tidak dapat dihapus. Minimal harus ada satu Admin dalam sistem ini.'
+                                    'Admin terakhir tidak dapat dihapus. Minimal harus ada satu Admin.'
                                 )
                                 ->danger()
                                 ->send();
@@ -82,33 +100,41 @@ class UsersTable
                         ->requiresConfirmation()
                         ->using(function ($records): void {
                             $jumlahAdmin = User::where('role', 'admin')->count();
-
-                            $adminTerpilih = $records
-                                ->filter(fn (User $user): bool => $user->role === 'admin')
-                                ->count();
-
-                            if ($jumlahAdmin - $adminTerpilih < 1) {
-                                Notification::make()
-                                    ->title('Penghapusan dibatalkan')
-                                    ->body('Minimal harus ada satu Admin dalam Sistem ini!.')
-                                    ->danger()
-                                    ->send();
-
-                                return;
-                            }
+                            $jumlahAdminDihapus = 0;
+                            $jumlahDihapus = 0;
+                            $jumlahDilewati = 0;
 
                             foreach ($records as $record) {
-                                if (
-                                    $record->role !== 'admin' ||
-                                    $jumlahAdmin > 1
-                                ) {
-                                    $record->delete();
+                                // Cegah penghapusan akun sendiri.
+                                if ($record->is(Auth::user())) {
+                                    $jumlahDilewati++;
+                                    continue;
+                                }
 
-                                    if ($record->role === 'admin') {
-                                        $jumlahAdmin--;
-                                    }
+                                // Jangan hapus Admin terakhir.
+                                if (
+                                    $record->role === 'admin' &&
+                                    ($jumlahAdmin - $jumlahAdminDihapus) <= 1
+                                ) {
+                                    $jumlahDilewati++;
+                                    continue;
+                                }
+
+                                $record->delete();
+                                $jumlahDihapus++;
+
+                                if ($record->role === 'admin') {
+                                    $jumlahAdminDihapus++;
                                 }
                             }
+
+                            Notification::make()
+                                ->title('Proses hapus pengguna selesai')
+                                ->body(
+                                    "Berhasil dihapus: {$jumlahDihapus}. Pengguna dilewati: {$jumlahDilewati}."
+                                )
+                                ->success()
+                                ->send();
                         }),
                 ]),
             ]);

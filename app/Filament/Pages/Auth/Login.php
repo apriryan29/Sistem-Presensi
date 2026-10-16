@@ -7,6 +7,7 @@ use App\Filament\Pages\Guru\Dashboard as GuruDashboard;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
@@ -24,8 +25,11 @@ class Login extends BaseLogin
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            $this->getEmailFormComponent()
-                ->label('Alamat Email'),
+            TextInput::make('username')
+                ->label('Username')
+                ->required()
+                ->autofocus()
+                ->autocomplete('username'),
 
             $this->getPasswordFormComponent(),
 
@@ -44,42 +48,51 @@ class Login extends BaseLogin
     protected function getCredentialsFromFormData(array $data): array
     {
         return [
-            'email' => $data['email'],
+            'username' => $data['username'],
             'password' => $data['password'],
             'role' => $data['role'],
         ];
     }
-
     public function authenticate(): ?LoginResponse
-{
-    $this->loginError = null;
+    {
+        $this->loginError = null;
 
-    try {
-        $role = $this->data['role'] ?? null;
+        // Periksa apakah ada isian wajib yang kosong
+        if (
+            blank($this->data['username'] ?? null) ||
+            blank($this->data['password'] ?? null) ||
+            blank($this->data['role'] ?? null)
+        ) {
+            $this->showError(
+                'Lengkapi semua isian terlebih dahulu.'
+            );
 
-        $url = match ($role) {
-            'admin' => AdminDashboard::getUrl(panel: 'admin'),
-            'guru' => GuruDashboard::getUrl(panel: 'admin'),
-            default => null,
-        };
-
-        if ($url !== null) {
-            redirect()->setIntendedUrl($url);
+            return null;
         }
 
-        return parent::authenticate();
-    } catch (ValidationException $e) {
-        $errors = $e->errors();
+        try {
+            $role = $this->data['role'];
 
-        $this->showError(
-            array_key_exists('data.email', $errors)
-                ? 'Email, password, atau level pengguna salah.'
-                : 'Lengkapi semua isian terlebih dahulu.'
-        );
+            $url = match ($role) {
+                'admin' => AdminDashboard::getUrl(panel: 'admin'),
+                'guru' => GuruDashboard::getUrl(panel: 'admin'),
+                default => null,
+            };
 
-        return null;
+            if ($url !== null) {
+                redirect()->setIntendedUrl($url);
+            }
+
+            return parent::authenticate();
+
+        } catch (ValidationException $e) {
+            $this->showError(
+                'Username, password, atau level pengguna salah.'
+            );
+
+            return null;
+        }
     }
-}
 
     protected function getRedirectUrl(): string
     {
