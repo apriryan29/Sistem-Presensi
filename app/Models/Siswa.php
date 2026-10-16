@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Siswa extends Model
 {
@@ -12,4 +13,9 @@ class Siswa extends Model
         'kelas',
         'jenis_kelamin',
     ];
+
+    public function presensis(): HasMany
+    {
+        return $this->hasMany(\App\Models\Presensi::class);
+    }
 }
