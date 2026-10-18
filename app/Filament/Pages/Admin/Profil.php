@@ -42,6 +42,7 @@ class Profil extends Page
     {
         $this->form->fill([
             'name' => Auth::user()->name,
+            'username' => Auth::user()->username,
             'email' => Auth::user()->email,
             'jabatan' => Auth::user()->jabatan,
         ]);
@@ -55,6 +56,12 @@ class Profil extends Page
                     ->schema([
                         TextInput::make('name')
                             ->label('Nama Lengkap')
+                            ->required()
+                            ->maxLength(255)
+                            ->readOnly(fn (): bool => ! $this->isEditing),
+                        
+                        TextInput::make('username')
+                            ->label('Username')
                             ->required()
                             ->maxLength(255)
                             ->readOnly(fn (): bool => ! $this->isEditing),
@@ -109,6 +116,7 @@ class Profil extends Page
                     $user->fill([
                         'name' => $data['name'],
                         'email' => $data['email'],
+                        'username' => $data['username'],
                         'jabatan' => $data['jabatan'],
                     ]);
 

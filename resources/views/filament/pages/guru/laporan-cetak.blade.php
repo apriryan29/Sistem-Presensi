@@ -6,8 +6,8 @@
     <style>
         @page { margin: 40px 36px; }
         body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 10px;
+            font-family: 'Times New Roman', serif;
+            font-size: 12px;
             color: #111;
         }
         h1 { font-size: 14px; text-align: center; margin: 0 0 4px; text-transform: uppercase; }
@@ -51,7 +51,7 @@
                 @foreach ($status as $label)
                     <th class="c" style="width: 42px;">{{ $label }}</th>
                 @endforeach
-                <th class="c" style="width: 52px;">% Hadir</th>
+                <th class="c" style="width: 52px;">Presentase</th>
             </tr>
         </thead>
         <tbody>

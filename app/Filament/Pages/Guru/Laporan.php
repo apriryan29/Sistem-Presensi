@@ -32,6 +32,13 @@ class Laporan extends Page implements HasTable
     protected static ?string $navigationLabel = 'Laporan';
 
     protected static ?string $title = 'Laporan';
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin/laporan') => 'Laporan',
+            '#' => 'Data',
+        ];
+    }
 
     /** Rentang tanggal (format Y-m-d), dipakai oleh card filter di file Blade. */
     public string $dari = '';
@@ -151,15 +158,6 @@ class Laporan extends Page implements HasTable
 
         return $table
             ->query($this->getTableQuery())
-            ->heading('Rekap Presensi Siswa')
-            ->description(function () {
-                [$dari, $sampai] = $this->rentang();
-
-                return 'Periode '
-                    . Carbon::parse($dari)->translatedFormat('d M Y')
-                    . ' – '
-                    . Carbon::parse($sampai)->translatedFormat('d M Y');
-            })
             ->columns([
                 TextColumn::make('nis')
                     ->label('NIS')

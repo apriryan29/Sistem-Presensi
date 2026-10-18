@@ -34,13 +34,17 @@ class Presensi extends Page implements HasTable
     protected static ?string $navigationLabel = 'Presensi';
 
     protected static ?string $title = 'Presensi Siswa';
-
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin/presensi') => 'Presensi',
+            '#' => 'Data',
+        ];
+    }
     public string $tanggal = '';
 
-    /** Cache [siswa_id => ['status' => ..., 'keterangan' => ...]] untuk satu request. */
     protected ?array $presensiMap = null;
 
-    /** Urutan sesuai permintaan: hadir, alpa, sakit, izin. */
     protected const STATUS = [
         'hadir' => 'Hadir',
         'alpa'  => 'Alpa',
@@ -83,10 +87,6 @@ class Presensi extends Page implements HasTable
         $this->resetTable();
     }
 
-    /**
-     * Ambil semua presensi pada tanggal terpilih dalam satu query,
-     * supaya tidak ada query per baris.
-     */
     protected function presensiData(): array
     {
         return $this->presensiMap ??= PresensiModel::query()
@@ -112,7 +112,6 @@ class Presensi extends Page implements HasTable
                 ['status' => $status]
             );
         } else {
-            // Hanya hapus jika status yang di-uncheck memang status saat ini.
             $query->where('status', $status)->delete();
         }
 

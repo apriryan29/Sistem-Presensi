@@ -2,9 +2,7 @@
     {{-- Card 1: Filter + tombol cetak --}}
     <x-filament::section
         heading="Buat Laporan"
-        description="Pilih rentang tanggal presensi yang ingin ditampilkan."
         icon="heroicon-o-calendar-days"
-        iconColor="warning"
     >
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
             <div>
