@@ -3,14 +3,15 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
-use Filament\Actions\Action;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Support\Facades\Blade;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -33,6 +35,31 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+
+            // Background halaman dengan efek radial oranye
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => <<<'HTML'
+                    <style>
+                        .fi-main {
+                            background:
+                                radial-gradient(
+                                    circle at 15% 10%,
+                                    rgba(245, 158, 11, 0.25),
+                                    transparent 40%
+                                ),
+                                radial-gradient(
+                                    circle at 90% 90%,
+                                    rgba(217, 119, 6, 0.2),
+                                    transparent 40%
+                                ),
+                                #ffffff !important;
+                            min-height: 100vh;
+                        }
+                    </style>
+                HTML
+            )
+
             ->discoverResources(
                 in: app_path('Filament/Resources'),
                 for: 'App\\Filament\\Resources'
@@ -50,9 +77,11 @@ class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
+
+            // Tombol keluar di bagian bawah sidebar
             ->renderHook(
-                \Filament\View\PanelsRenderHook::SIDEBAR_FOOTER,
-                fn (): string => \Illuminate\Support\Facades\Blade::render(<<<'BLADE'
+                PanelsRenderHook::SIDEBAR_FOOTER,
+                fn (): string => Blade::render(<<<'BLADE'
                     <div style="padding: 12px 16px; display: flex; justify-content: center;">
                         <button
                             type="button"
@@ -66,8 +95,8 @@ class AdminPanelProvider extends PanelProvider
                                 padding: 10px 16px;
                                 border: none;
                                 border-radius: 8px;
-                                background: grey;
-                                color: white;
+                                background: rgba(245, 158, 11, 0.25);
+                                color: #b57405;
                                 cursor: pointer;
                             "
                         >
@@ -154,6 +183,7 @@ class AdminPanelProvider extends PanelProvider
                     </style>
                 BLADE)
             )
+
             ->userMenuItems([
                 'logout' => fn (Action $action): Action => $action
                     ->label('Keluar')
@@ -164,6 +194,7 @@ class AdminPanelProvider extends PanelProvider
                         'onclick' => "event.preventDefault(); document.getElementById('logout-confirm-modal').showModal();",
                     ]),
             ])
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
