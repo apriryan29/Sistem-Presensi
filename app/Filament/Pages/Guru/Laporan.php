@@ -40,17 +40,14 @@ class Laporan extends Page implements HasTable
         ];
     }
 
-    /** Rentang tanggal (format Y-m-d), dipakai oleh card filter di file Blade. */
     public string $dari = '';
 
     public string $sampai = '';
 
-    /** Cache [siswa_id => [status => jumlah]] untuk satu request. */
     protected ?array $rekapMap = null;
 
     protected ?Kelas $kelasCache = null;
 
-    /** Urutan sama seperti halaman Presensi. */
     protected const STATUS = [
         'hadir' => ['label' => 'Hadir', 'color' => 'success'],
         'alpa'  => ['label' => 'Alpa',  'color' => 'danger'],
@@ -111,10 +108,6 @@ class Laporan extends Page implements HasTable
         return [$dari, $sampai];
     }
 
-    /**
-     * Hitung presensi semua siswa kelas ini pada rentang terpilih dalam satu query,
-     * supaya tidak ada query per baris.
-     */
     protected function rekapData(): array
     {
         if ($this->rekapMap !== null) {
@@ -191,7 +184,13 @@ class Laporan extends Page implements HasTable
 
                         return new \Illuminate\Support\HtmlString(
                             '<div style="width:100%;height:6px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:6px;">
-                                <div style="width:' . $persen . '%;height:100%;background:#f59e0b;border-radius:999px;"></div>
+                                <div style="
+                                    width:' . $persen . '%;
+                                    height:100%;
+                                    background:linear-gradient(to right, #000000, #ef4444, #f59e0b);
+                                    border-radius:999px;
+                                    transition:width 0.3s ease;
+                                "></div>
                             </div>'
                         );
                     }),
