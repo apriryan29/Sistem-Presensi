@@ -158,5 +158,27 @@
         </div>
     </div>
 
+    {{-- Card petunjuk (warna berbeda) --}}
+    <div
+        style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(223, 138, 9, 0.35);
+            background-color: rgba(223, 138, 9, 0.10);
+        "
+    >
+        <x-filament::icon
+            icon="heroicon-o-information-circle"
+            style="width: 24px; height: 24px; flex-shrink: 0; color: rgb(223, 138, 9);"
+        />
+
+        <span style="font-size: 14px; font-weight: 600; color: rgb(223, 138, 9);">
+            Lakukan presensi dengan memilih kehadiran dari daftar siswa di bawah.
+        </span>
+    </div>
+
     {{ $this->table }}
 </x-filament-panels::page>

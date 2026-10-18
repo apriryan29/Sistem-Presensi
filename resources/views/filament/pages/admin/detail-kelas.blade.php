@@ -67,16 +67,16 @@
             gap: 12px;
             padding: 16px 20px;
             border-radius: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.35);
-            background-color: rgba(59, 130, 246, 0.10);
+            border: 1px solid rgba(223, 138, 9, 0.35);
+            background-color: rgba(223, 138, 9, 0.10);
         "
     >
         <x-filament::icon
             icon="heroicon-o-information-circle"
-            style="width: 24px; height: 24px; flex-shrink: 0; color: rgb(59, 130, 246);"
+            style="width: 24px; height: 24px; flex-shrink: 0; color: rgb(223, 138, 9);"
         />
 
-        <span style="font-size: 14px; font-weight: 600; color: rgb(59, 130, 246);">
+        <span style="font-size: 14px; font-weight: 600; color: rgb(223, 138, 9);">
             Pilih Siswa untuk Pindah Kelas, Lulus, atau Naik Kelas.
         </span>
     </div>
